@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using TuitionApi;
 using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
+using TuitionApi.Jobs;
 
 internal class Program
 {
@@ -16,6 +17,7 @@ internal class Program
         builder.Services.AddSingleton<DummyDataContext>();
         builder.Services.AddControllers();
 
+        builder.Services.AddHostedService<PaymentBackgroundService>();
 
         builder.Services.AddVersionedApiExplorer(setup =>
         {

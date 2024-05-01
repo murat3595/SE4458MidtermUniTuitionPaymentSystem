@@ -1,13 +1,15 @@
-﻿namespace TuitionApi
+﻿using TuitionApi.Models.Data;
+
+namespace TuitionApi
 {
     public class DummyDataContext
     {
         public List<UserModel> Users { get; set; }
+        public List<PaymentModel> Payments { get; set; }
         public DummyDataContext()
         {
             this.Users = new List<UserModel> {
                 new UserModel(1000,"admin","admin", "admin", "adminoğlu", 0, 0),
-                //eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IsO2xJ9yZW5jaTEiLCJleHAiOjE3MTMyMTE5MTcsImlzcyI6Iklzc3VlckluZm9ybWF0aW9uIiwiYXVkIjoiQXVkaWVuY2VJbmZvcm1hdGlvbiJ9.YnmuhCyc8OCW_6Xv8eqce0XPY7Iopcu2_akFzqhPvBU
                 new UserModel(1,"öğrenci1","öğrenci1", "mehmed1", "mehmedov1", 0, 100),
                 new UserModel(2,"öğrenci2","öğrenci2", "mehmed2", "mehmedov2", 0, 100),
                 new UserModel(3,"öğrenci3","öğrenci3", "mehmed3", "mehmedov3", 0, 100),
@@ -35,7 +37,9 @@
                 new UserModel(25,"öğrenci25","öğrenci25", "mehmed25", "mehmedov25", 0, 100),
                 new UserModel(26,"öğrenci26","öğrenci26", "mehmed26", "mehmedov26", 0, 100),
                 new UserModel(27,"öğrenci27","öğrenci27", "mehmed27", "mehmedov27", 0, 100)
-            };                        
+            };
+
+            this.Payments = new List<PaymentModel>();
         }                             
 
         public void SaveChanges()

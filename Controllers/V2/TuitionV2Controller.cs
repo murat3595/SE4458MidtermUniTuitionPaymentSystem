@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using RabbitMQ.Client;
 using TuitionApi.Models.Dto;
 
 namespace TuitionApi.Controllers.V2
@@ -18,9 +21,11 @@ namespace TuitionApi.Controllers.V2
     public class TuitionV2Controller : ControllerBase
     {
         private DummyDataContext _dummyDataContext;
-        public TuitionV2Controller(DummyDataContext dummyDataContext)
+        private IConfiguration configuration;
+        public TuitionV2Controller(DummyDataContext dummyDataContext, IConfiguration configuration)
         {
             this._dummyDataContext = dummyDataContext;
+            this.configuration = configuration;
         }
 
         /// <summary>
@@ -69,14 +74,43 @@ namespace TuitionApi.Controllers.V2
                     PaymentStatus = "Error"
                 });
 
-            user.Balance += request.PaymentAmount;
+            //user.Balance += request.PaymentAmount; this will be made by PaymentBackgroundService
+
+            var payment = new Models.Data.PaymentModel(
+                Guid.NewGuid().ToString(),
+                request.UserID,
+                request.PaymentAmount,
+                false,
+                true);
+
+            _dummyDataContext.Payments.Add(
+                payment
+            );
+
+            var connectionFactory = new RabbitMQ.Client.ConnectionFactory()
+            {
+                HostName = configuration["RabbitMQ:hostname"],
+                Port = Convert.ToInt32(configuration["RabbitMQ:port"]),
+                UserName = String.IsNullOrEmpty(configuration["RabbitMQ:username"]) ? ConnectionFactory.DefaultUser : configuration["RabbitMQ:username"],
+                Password = String.IsNullOrEmpty(configuration["RabbitMQ:password"]) ? ConnectionFactory.DefaultPass : configuration["RabbitMQ:password"]
+            };
+
+            var connection = connectionFactory.CreateConnection();
+            var _channelModel = connection.CreateModel();
+
+            var properties = _channelModel.CreateBasicProperties();
+            _channelModel.BasicPublish("tuition.exchange", "tuition.queue.payment", properties, Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(new PaymentQueueDto
+            {
+                PaymentID = payment.PaymentId,
+                Processed = payment.Processed,
+                Success = payment.Success,
+            })));
+
+            connection.Dispose();
 
             _dummyDataContext.SaveChanges();
 
-            return Ok(new
-            {
-                PaymentStatus = "Success"
-            });
+            return Ok(payment);
         }
 
         /// <summary>
